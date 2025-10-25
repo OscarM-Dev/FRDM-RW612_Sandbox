@@ -28,83 +28,38 @@
  * Prototypes
  ******************************************************************************/
 
-static uint32_t SetBoardToClient();
-static uint32_t SetBoardToAP();
-static uint32_t CleanUpAP();
-static uint32_t CleanUpClient();
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-typedef enum board_wifi_states
-{
-    WIFI_STATE_CLIENT,
-    WIFI_STATE_CONNECTING,
-    WIFI_STATE_CLIENT_SCAN,
-    WIFI_STATE_AP,
-    WIFI_STATE_AP_SCAN,
-} board_wifi_states;
 
-struct board_state_variables
-{
-    board_wifi_states wifiState;
-    char ssid[WPL_WIFI_SSID_LENGTH];
-    char password[WPL_WIFI_PASSWORD_LENGTH];
-    char security[WIFI_SECURITY_LENGTH];
-    bool connected;
-    TaskHandle_t mainTask;
-};
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-struct board_state_variables g_BoardState;
+extern board_wifi_control WiFi_Control;
 
 /*******************************************************************************
  * Code
  ******************************************************************************/
-
-/* Link lost callback */
-static void LinkStatusChangeCallback(bool linkState)
-{
-    if (linkState == false)
-    {
-        /* -------- LINK LOST -------- */
-        /* DO SOMETHING */
-        PRINTF("-------- LINK LOST --------\r\n");
-    }
-    else
-    {
-        /* -------- LINK REESTABLISHED -------- */
-        /* DO SOMETHING */
-        PRINTF("-------- LINK REESTABLISHED --------\r\n");
-    }
-}
-
 /*!
  * @brief The main task function
  */
-static void main_task(void *arg)
+static void main_task( void *arg )
 {
     uint32_t result = 1;
-
-    PRINTF(
-        "\r\n"
-        "Starting webconfig DEMO\r\n");
-
-    /* When the App starts up, it will first read the mflash to check if any
-     * credentials have been saved from previous runs.
-     * If the mflash is empty, the board starts and AP allowing the user to configure
-     * the desired Wi-Fi network.
-     * Otherwise the stored credentials will be used to connect to the Wi-Fi network.*/
-    WC_DEBUG("[i] Trying to load data from mflash.\r\n");
-
-    init_flash_storage(CONNECTION_INFO_FILENAME);
-
     char ssid[WPL_WIFI_SSID_LENGTH];
     char password[WPL_WIFI_PASSWORD_LENGTH];
     char security[WIFI_SECURITY_LENGTH];
 
+    PRINTF( "\r\n""Starting RW612 WIFI MQTT project\r\n" );
+
+    init_flash_storage( CONNECTION_INFO_FILENAME );
+
+    //Analize if there are WiFi network credentials available in mflash.
+    PRINTF( "[i] Verifying available WiFi credentials.\r\n" );
+    
+    /*
     if (reset_saved_wifi_credentials(CONNECTION_INFO_FILENAME) != 0)
     {
         PRINTF("[!] Error occured during resetting of saved credentials!\r\n");
@@ -116,237 +71,80 @@ static void main_task(void *arg)
     {
         // Reset back to AP mode
         g_BoardState.wifiState = WIFI_STATE_AP;
+    }*/
+
+    result = get_saved_wifi_credentials( CONNECTION_INFO_FILENAME, ssid, password, security );
+
+    if ( result == 0 && strcmp( ssid, "" ) != 0 )
+    {   //Credentials available.
+        PRINTF( "[i] WiFi credentials found\r\n" );
+        WiFi_Control.WifiState = WIFI_STATE_CLIENT;
+
+        strcpy( WiFi_Control.SSID, ssid );
+        strcpy( WiFi_Control.Pswd, password );
+        strcpy( WiFi_Control.Security, security );
     }
 
-    result = get_saved_wifi_credentials(CONNECTION_INFO_FILENAME, ssid, password, security);
-
-    if (result == 0 && strcmp(ssid, "") != 0)
-    {
-        /* Credentials from last time have been found. The board will attempt to
-         * connect to this network as a client */
-        WC_DEBUG("[i] Saved SSID: %s, Password: %s, Security: %s\r\n", ssid, password, security);
-        g_BoardState.wifiState = WIFI_STATE_CLIENT;
-        strcpy(g_BoardState.ssid, ssid);
-        strcpy(g_BoardState.password, password);
-        strcpy(g_BoardState.security, security);
-    }
     else
-    {
-        /* No credentials are stored, the board will start its own AP */
-        WC_DEBUG("[i] Nothing stored yet\r\n");
-        strcpy(g_BoardState.ssid, WIFI_SSID);
-        strcpy(g_BoardState.password, WIFI_PASSWORD);
-        g_BoardState.wifiState = WIFI_STATE_AP;
+    {   //Credentials not available.
+        PRINTF( "[i] WiFi credentials not available\r\n" );
+
+        strcpy( WiFi_Control.SSID, WIFI_SSID );
+        strcpy( WiFi_Control.Pswd, WIFI_PASSWORD );
+        WiFi_Control.WifiState = WIFI_STATE_AP;
     }
 
-    g_BoardState.connected = false;
+    WiFi_Control.Connected = false;
 
-    /* Initialize Wi-Fi board */
-    WC_DEBUG("[i] Initializing Wi-Fi connection... \r\n");
+    //Initialize wifi module.
+    PRINTF( "[i] Initializing Wi-Fi module... \r\n" );
 
     result = WPL_Init();
-    if (result != WPLRET_SUCCESS)
+    if ( result != WPLRET_SUCCESS )
     {
-        PRINTF("[!] WPL Init failed: %d\r\n", (uint32_t)result);
-        __BKPT(0);
+        PRINTF( "[!] WPL Init failed: %d\r\n", ( uint32_t ) result );
+        __BKPT( 0 );
     }
 
-    result = WPL_Start(LinkStatusChangeCallback);
-    if (result != WPLRET_SUCCESS)
+    result = WPL_Start( LinkStatusChangeCallback );
+    if ( result != WPLRET_SUCCESS )
     {
-        PRINTF("[!] WPL Start failed %d\r\n", (uint32_t)result);
-        __BKPT(0);
+        PRINTF( "[!] WPL Start failed %d\r\n", ( uint32_t ) result );
+        __BKPT( 0 );
     }
 
-    WC_DEBUG("[i] Successfully initialized Wi-Fi module\r\n");
+    PRINTF( "[i] Successfully initialized Wi-Fi module\r\n" );
 
-    /* Here other tasks can be created that will run the enduser app.... */
-
-    /* Main Loop */
-    while (1)
+    //Verify board WiFi state.
+    switch ( WiFi_Control.WifiState )
     {
-        /* The SetBoardTo<state> function will configure the board Wifi to that given state.
-         * After that, this task will suspend itself. It will remain suspended until it is time
-         * to switch the state again. Uppon resuming, it will clean up the current state.
-         * Every time the Wi-Fi state changes, this loop will perform an iteration switching back
-         * and fourth between the two states as required.
-         */
-        switch (g_BoardState.wifiState)
-        {
-            case WIFI_STATE_CLIENT:
-                SetBoardToClient();
-                /* Suspend here until its time to swtich back to AP */
-                vTaskSuspend(NULL);
-                CleanUpClient();
-                break;
-            case WIFI_STATE_AP:
-            default:
-                SetBoardToAP();
-                /* Suspend here until its time to stop the AP */
-                vTaskSuspend(NULL);
-                CleanUpAP();
-        }
+        case WIFI_STATE_CLIENT:
+            SetBoardToClient();
+        break;
+
+        case WIFI_STATE_AP:
+        default:
+            SetBoardToAP();
+        break;
     }
+
+    vTaskDelete( NULL );
+
 }
 
-/* Initialize and start local AP */
-static uint32_t SetBoardToAP()
-{
-    uint32_t result;
-
-    /* Set the global ssid and password to the default AP ssid and password */
-    strcpy(g_BoardState.ssid, WIFI_SSID);
-    strcpy(g_BoardState.password, WIFI_PASSWORD);
-
-    /* Start the access point */
-    PRINTF("Starting Access Point: SSID: %s, Chnl: %d\r\n", g_BoardState.ssid, WIFI_AP_CHANNEL);
-    result = WPL_Start_AP(g_BoardState.ssid, g_BoardState.password, WIFI_AP_CHANNEL);
-
-    if (result != WPLRET_SUCCESS)
-    {
-        PRINTF("[!] Failed to start access point\r\n");
-        while (1)
-            __BKPT(0);
-    }
-    g_BoardState.connected = true;
-
-    char ip[16];
-    WPL_GetIP(ip, 0);
-    PRINTF(" Now join that network on your device and connect to this IP: %s\r\n", ip);
-
-    return 0;
-}
-
-/* Clean up the local AP after waiting for all tasks to clean up */
-static uint32_t CleanUpAP()
-{
-    /* Give time for reply message to reach the web interface before destorying the conection */
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
-
-    WC_DEBUG("[i] Stopping AP!\r\n");
-    if (WPL_Stop_AP() != WPLRET_SUCCESS)
-    {
-        PRINTF("Error while stopping ap\r\n");
-        while (1)
-            __BKPT(0);
-    }
-
-    return 0;
-}
-
-/* Connect to the external AP in g_BoardState.ssid */
-static uint32_t SetBoardToClient()
-{
-    int32_t result;
-    // If we are already connected, skip the initialization
-    if (!g_BoardState.connected)
-    {
-        /* Add Wi-Fi network */
-        if (strstr(g_BoardState.security, "WPA3_SAE"))
-        {
-            result = WPL_AddNetworkWithSecurity(g_BoardState.ssid, g_BoardState.password, WIFI_NETWORK_LABEL, WPL_SECURITY_WPA3_SAE);
-        }
-        else
-        {
-            result = WPL_AddNetworkWithSecurity(g_BoardState.ssid, g_BoardState.password, WIFI_NETWORK_LABEL, WPL_SECURITY_WILDCARD);
-        }
-        if (result == WPLRET_SUCCESS)
-        {
-            PRINTF("Connecting as client to ssid: %s with password %s\r\n", g_BoardState.ssid, g_BoardState.password);
-            result = WPL_Join(WIFI_NETWORK_LABEL);
-        }
-
-        if (result != WPLRET_SUCCESS)
-        {
-            PRINTF("[!] Cannot connect to Wi-Fi\r\n[!]ssid: %s\r\n[!]passphrase: %s\r\n", g_BoardState.ssid,
-                   g_BoardState.password);
-            char c;
-            do
-            {
-                PRINTF("[i] To reset the board to AP mode, press 'r'.\r\n");
-                PRINTF("[i] In order to try connecting again press 'a'.\r\n");
-
-                do
-                {
-                    c = GETCHAR();
-                    // Skip over \n and \r and don't print the prompt again, just get next char
-                } while (c == '\n' || c == '\r');
-
-                switch (c)
-                {
-                    case 'r':
-                    case 'R':
-                        if (reset_saved_wifi_credentials(CONNECTION_INFO_FILENAME) != 0)
-                        {
-                            PRINTF("[!] Error occured during resetting of saved credentials!\r\n");
-                            while (1)
-                                __BKPT(0);
-                        }
-                        else
-                        {
-                            // Reset back to AP mode
-                            g_BoardState.wifiState = WIFI_STATE_AP;
-                            return 0;
-                        }
-                        break;
-                    case 'a':
-                    case 'A':
-                        // Try connecting again...
-                        return 0;
-                    default:
-                        PRINTF("Unknown command %c, please try again.\r\n", c);
-                }
-
-            } while (1);
-        }
-        else
-        {
-            PRINTF("[i] Connected to Wi-Fi\r\nssid: %s\r\n[!]passphrase: %s\r\n", g_BoardState.ssid,
-                   g_BoardState.password);
-            g_BoardState.connected = true;
-            char ip[16];
-            WPL_GetIP(ip, 1);
-            PRINTF(" Now join that network on your device and connect to this IP: %s\r\n", ip);
-        }
-    }
-    return 0;
-}
-
-/* Wait for any transmissions to finish and clean up the Client connection */
-static uint32_t CleanUpClient()
-{
-    /* Give time for reply message to reach the web interface before destroying the connection */
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-    /* Leave the external AP */
-    if (WPL_Leave() != WPLRET_SUCCESS)
-    {
-        PRINTF("[!] Error Leaving from Client network.\r\n");
-        __BKPT(0);
-    }
-
-    /* Remove the network profile */
-    if (WPL_RemoveNetwork(WIFI_NETWORK_LABEL) != WPLRET_SUCCESS)
-    {
-        PRINTF("[!] Failed to remove network profile.\r\n");
-        __BKPT(0);
-    }
-
-    return 0;
-}
 /*!
  * @brief Main function.
  */
-int main(void)
+int main( void )
 {
     /* Initialize the hardware */
     BOARD_InitHardware();
 
     /* Create the main Task */
-    if (xTaskCreate(main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 4, &g_BoardState.mainTask) != pdPASS)
+    if ( xTaskCreate( main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 4, NULL ) != pdPASS )
     {
-        PRINTF("[!] MAIN Task creation failed!\r\n");
-        while (1)
+        PRINTF( "[!] MAIN Task creation failed!\r\n" );
+        while ( 1 )
             ;
     }
 
@@ -354,6 +152,6 @@ int main(void)
     vTaskStartScheduler();
 
     /* Should not reach this statement */
-    for (;;)
+    for ( ;; )
         ;
 }
