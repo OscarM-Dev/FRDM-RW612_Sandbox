@@ -26,6 +26,7 @@ RM := rm -rf
 -include lwip/src/core/ipv4/subdir.mk
 -include lwip/src/core/subdir.mk
 -include lwip/src/apps/mqtt/subdir.mk
+-include lwip/src/apps/httpsrv/subdir.mk
 -include lwip/src/api/subdir.mk
 -include lwip/port/sys_arch/dynamic/subdir.mk
 -include freertos/freertos-kernel/portable/MemMang/subdir.mk
@@ -84,7 +85,7 @@ main-build: WiFi_MQTT_practice.axf
 WiFi_MQTT_practice.axf: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU Linker'
-	arm-none-eabi-gcc -nostdlib -Xlinker -no-warn-rwx-segments -Xlinker -Map="WiFi_MQTT_practice.map" -Xlinker --gc-sections -Xlinker -print-memory-usage -Xlinker --sort-section=alignment -Xlinker --cref -mcpu=cortex-m33+nodsp -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -T frdmrw612_wifi_mqtt_Debug.ld -o "WiFi_MQTT_practice.axf" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-none-eabi-gcc -nostdlib -Xlinker -no-warn-rwx-segments -Xlinker -Map="WiFi_MQTT_practice.map" -Xlinker --gc-sections -Xlinker -print-memory-usage -Xlinker --sort-section=alignment -Xlinker --cref -mcpu=cortex-m33+nodsp -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -T WiFi_MQTT_practice_Debug.ld -o "WiFi_MQTT_practice.axf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
