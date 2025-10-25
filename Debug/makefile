@@ -18,6 +18,8 @@ RM := rm -rf
 -include utilities/debug_console/subdir.mk
 -include utilities/subdir.mk
 -include startup/subdir.mk
+-include source/mqtt/src/subdir.mk
+-include source/SoftAP/src/subdir.mk
 -include source/subdir.mk
 -include lwip/src/netif/ppp/polarssl/subdir.mk
 -include lwip/src/netif/ppp/subdir.mk

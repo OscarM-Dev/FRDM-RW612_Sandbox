@@ -48,7 +48,9 @@ lwip/src/core/ipv6 \
 lwip/src/netif \
 lwip/src/netif/ppp \
 lwip/src/netif/ppp/polarssl \
+source/SoftAP/src \
 source \
+source/mqtt/src \
 startup \
 utilities/debug_console \
 utilities \

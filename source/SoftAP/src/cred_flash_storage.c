@@ -7,7 +7,7 @@
  */
 
 #include "cred_flash_storage.h"
-#include "webconfig.h"
+#include "soft_ap.h"
 #include "fsl_debug_console.h"
 #include "mflash_file.h"
 #include "wpl.h"

@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _WEBCONFIG_H_
-#define _WEBCONFIG_H_
+#ifndef SOFT_AP_H
+#define SOFT_AP_H
 
 /*******************************************************************************
  * Definitions
@@ -30,15 +30,6 @@
 /* Parameters that apply to AP mode only */
 #ifndef WIFI_AP_CHANNEL
 #define WIFI_AP_CHANNEL 1
-#endif
-
-#define MAX_RETRY_TICKS 50
-
-#ifndef HTTPD_STACKSIZE
-#define HTTPD_STACKSIZE 512
-#endif
-#ifndef HTTPD_PRIORITY
-#define HTTPD_PRIORITY DEFAULT_THREAD_PRIO
 #endif
 
 #define CONNECTION_INFO_FILENAME ("connection_info.dat")
