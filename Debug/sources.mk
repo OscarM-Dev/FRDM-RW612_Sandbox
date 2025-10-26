@@ -40,6 +40,7 @@ freertos/freertos-kernel/portable/GCC/ARM_CM33_NTZ/non_secure \
 freertos/freertos-kernel/portable/MemMang \
 lwip/port/sys_arch/dynamic \
 lwip/src/api \
+lwip/src/apps/mdns \
 lwip/src/apps/mqtt \
 lwip/src/core \
 lwip/src/core/ipv4 \
@@ -47,7 +48,9 @@ lwip/src/core/ipv6 \
 lwip/src/netif \
 lwip/src/netif/ppp \
 lwip/src/netif/ppp/polarssl \
+source/SoftAP/src \
 source \
+source/mqtt/src \
 startup \
 utilities/debug_console \
 utilities \
