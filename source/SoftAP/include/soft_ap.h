@@ -40,6 +40,8 @@
 #define WIFI_NETWORK_LABEL "MyWifi"
 #define DEFAULT_WIFI_SECURITY "WPA3_SAE"
 
+#define MAX_CONNECTION_ATTEMPTS 3
+
 /*******************************************************************************
  * Types.
  ******************************************************************************/

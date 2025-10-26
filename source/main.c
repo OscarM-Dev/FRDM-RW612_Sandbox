@@ -19,6 +19,7 @@
 #include "fsl_debug_console.h"
 #include "soft_ap.h"
 #include "cred_flash_storage.h"
+#include "mqtt_freertos.h"
 
 #include <stdio.h>
 
@@ -51,6 +52,7 @@ static void main_task( void *arg )
     char ssid[WPL_WIFI_SSID_LENGTH];
     char password[WPL_WIFI_PASSWORD_LENGTH];
     char security[WIFI_SECURITY_LENGTH];
+    uint8_t i = 0;
 
     PRINTF( "\r\n""Starting RW612 WIFI MQTT project\r\n" );
 
@@ -58,21 +60,7 @@ static void main_task( void *arg )
 
     //Analize if there are WiFi network credentials available in mflash.
     PRINTF( "[i] Verifying available WiFi credentials.\r\n" );
-    
-    /*
-    if (reset_saved_wifi_credentials(CONNECTION_INFO_FILENAME) != 0)
-    {
-        PRINTF("[!] Error occured during resetting of saved credentials!\r\n");
-        while (1)
-        __BKPT(0);
-    }
-        
-    else
-    {
-        // Reset back to AP mode
-        g_BoardState.wifiState = WIFI_STATE_AP;
-    }*/
-
+   
     result = get_saved_wifi_credentials( CONNECTION_INFO_FILENAME, ssid, password, security );
 
     if ( result == 0 && strcmp( ssid, "" ) != 0 )
@@ -116,16 +104,33 @@ static void main_task( void *arg )
     PRINTF( "[i] Successfully initialized Wi-Fi module\r\n" );
 
     //Verify board WiFi state.
-    switch ( WiFi_Control.WifiState )
+    while ( true )
     {
-        case WIFI_STATE_CLIENT:
-            //SetBoardToClient();
-        break;
+        //Check connection retries.
+        if ( i > MAX_CONNECTION_ATTEMPTS )
+        {   //Set to AP mode.
+            WiFi_Control.WifiState = WIFI_STATE_AP;
+        }
 
-        case WIFI_STATE_AP:
-        default:
+        if ( WiFi_Control.WifiState == WIFI_STATE_CLIENT )
+        {
+            SetBoardToClient();
+
+            //Verifying if board was able to connect.
+            if ( WiFi_Control.Connected = true )
+            {
+                mqtt_freertos_run_thread( netif_default );  //run mqtt task.
+                break;
+            }
+
+            i++;
+        }
+
+        else
+        {   //AP mode.
             SetBoardToAP();
-        break;
+            break;
+        }
     }
 
     vTaskDelete( NULL );

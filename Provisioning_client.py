@@ -1,7 +1,7 @@
 import socket
 
 def tcp_client():
-    server_ip = '192.168.1.1'
+    server_ip = '192.168.1.1' #insert here board ip.
     server_port = 10001
 
     try:

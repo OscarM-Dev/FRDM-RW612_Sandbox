@@ -26,11 +26,30 @@ board_wifi_control WiFi_Control;
  */
 void LinkStatusChangeCallback( bool linkState )
 {
+    static uint8_t retries = 0;
+
     if ( linkState == false )
     {
         /* -------- LINK LOST -------- */
         /* DO SOMETHING */
         PRINTF( "-------- LINK LOST --------\r\n" );
+        
+        //Clean connection and reset.
+        CleanUpClient();       
+    
+        if ( reset_saved_wifi_credentials( CONNECTION_INFO_FILENAME ) != 0 )
+        {
+            PRINTF( "[!] Error occured during resetting of saved credentials!\r\n" );
+            while (1)
+            __BKPT(0);
+        }
+        
+        else
+        {
+            // Reset back to AP mode
+            PRINTF( "[i] Restarting board.\r\n" );
+            NVIC_SystemReset();           
+        }
     }
 
     else
@@ -133,79 +152,41 @@ uint8_t CleanUpAP( char *ssid, char *pswd )
 uint8_t SetBoardToClient( void )
 {
     uint8_t result;
-    /*
+
     // If we are already connected, skip the initialization
-    if (!g_BoardState.connected)
+    if ( !WiFi_Control.Connected )
     {
         //Add Wi-Fi network
-        if (strstr(g_BoardState.security, "WPA3_SAE"))
+        if ( strstr( WiFi_Control.Security, "WPA3_SAE ") )
         {
-            result = WPL_AddNetworkWithSecurity(g_BoardState.ssid, g_BoardState.password, WIFI_NETWORK_LABEL, WPL_SECURITY_WPA3_SAE);
+            result = WPL_AddNetworkWithSecurity( WiFi_Control.SSID, WiFi_Control.Pswd, WIFI_NETWORK_LABEL, WPL_SECURITY_WPA3_SAE );
         }
+
         else
         {
-            result = WPL_AddNetworkWithSecurity(g_BoardState.ssid, g_BoardState.password, WIFI_NETWORK_LABEL, WPL_SECURITY_WILDCARD);
+            result = WPL_AddNetworkWithSecurity( WiFi_Control.SSID, WiFi_Control.Pswd, WIFI_NETWORK_LABEL, WPL_SECURITY_WILDCARD );
         }
-        if (result == WPLRET_SUCCESS)
+
+        if ( result == WPLRET_SUCCESS )
         {
-            PRINTF("Connecting as client to ssid: %s with password %s\r\n", g_BoardState.ssid, g_BoardState.password);
-            result = WPL_Join(WIFI_NETWORK_LABEL);
+            PRINTF( "Connecting as client to ssid: %s with password %s\r\n", WiFi_Control.SSID, WiFi_Control.Pswd );
+            result = WPL_Join( WIFI_NETWORK_LABEL );
         }
 
-        if (result != WPLRET_SUCCESS)
+        if ( result != WPLRET_SUCCESS )
         {
-            PRINTF("[!] Cannot connect to Wi-Fi\r\n[!]ssid: %s\r\n[!]passphrase: %s\r\n", g_BoardState.ssid,
-                   g_BoardState.password);
-            char c;
-            do
-            {
-                PRINTF("[i] To reset the board to AP mode, press 'r'.\r\n");
-                PRINTF("[i] In order to try connecting again press 'a'.\r\n");
-
-                do
-                {
-                    c = GETCHAR();
-                    // Skip over \n and \r and don't print the prompt again, just get next char
-                } while (c == '\n' || c == '\r');
-
-                switch (c)
-                {
-                    case 'r':
-                    case 'R':
-                        if (reset_saved_wifi_credentials(CONNECTION_INFO_FILENAME) != 0)
-                        {
-                            PRINTF("[!] Error occured during resetting of saved credentials!\r\n");
-                            while (1)
-                                __BKPT(0);
-                        }
-                        else
-                        {
-                            // Reset back to AP mode
-                            g_BoardState.wifiState = WIFI_STATE_AP;
-                            return 0;
-                        }
-                        break;
-                    case 'a':
-                    case 'A':
-                        // Try connecting again...
-                        return 0;
-                    default:
-                        PRINTF("Unknown command %c, please try again.\r\n", c);
-                }
-
-            } while (1);
+            PRINTF( "[!] Cannot connect to Wi-Fi\r\n[!]ssid: %s\r\n[!]passphrase: %s\r\n", WiFi_Control.SSID, WiFi_Control.Pswd );
+            WiFi_Control.Connected = false;
         }
+
         else
         {
-            PRINTF("[i] Connected to Wi-Fi\r\nssid: %s\r\n[!]passphrase: %s\r\n", g_BoardState.ssid,
-                   g_BoardState.password);
-            g_BoardState.connected = true;
-            char ip[16];
-            WPL_GetIP(ip, 1);
-            PRINTF(" Now join that network on your device and connect to this IP: %s\r\n", ip);
+            PRINTF( "[i] Connected to Wi-Fi\r\nssid: %s\r\n[!]passphrase: %s\r\n", WiFi_Control.SSID, WiFi_Control.Pswd );
+            WiFi_Control.Connected = true;
         }
-    } */
-    return 0;
+    }
+
+    return result;
 }
 
 /**
