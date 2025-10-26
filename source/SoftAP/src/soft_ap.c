@@ -8,6 +8,8 @@
  ******************************************************************************/
 #include "soft_ap.h"
 #include "socket_task.h"
+#include "lwip/apps/mdns.h"
+#include "wm_net.h"
 
 /*******************************************************************************
  * Global data.
@@ -17,7 +19,6 @@ board_wifi_control WiFi_Control;
 /*******************************************************************************
  * Functions.
  ******************************************************************************/
-
 /**
  * @brief WiFi connection status change callback.
  * 
@@ -40,6 +41,13 @@ void LinkStatusChangeCallback( bool linkState )
     }
 }
 
+/*!
+ * @brief Callback function to generate TXT mDNS record for HTTP service.
+ */
+ static void http_srv_txt( struct mdns_service *service, void *txt_userdata )
+ {
+    mdns_resp_add_service_txtitem( service, "echo", 4 );
+ }
 
 /**
  * @brief This function sets the board as a soft AP to obtain a WiFi network credentials.
@@ -71,6 +79,13 @@ uint8_t SetBoardToAP( void )
     //Temporal, Showing board IP for TCP client.
     WPL_GetIP( ip, 0 );
     PRINTF(" Now join that network on your device and connect to this IP: %s\r\n", ip );
+
+    //MDNS service announcment.
+    LOCK_TCPIP_CORE();
+    mdns_resp_init();
+    mdns_resp_add_netif( net_get_uap_handle(), "RW612_board" );
+    mdns_resp_add_service( net_get_uap_handle(), "RW612_board", "_echo", DNSSD_PROTO_TCP, 10001, http_srv_txt, NULL );
+    UNLOCK_TCPIP_CORE();
 
     //Initializing TCP server.
     if ( socket_task_init( 1, NULL, "10001" ) < 0 )

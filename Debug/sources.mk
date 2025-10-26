@@ -41,6 +41,7 @@ freertos/freertos-kernel/portable/MemMang \
 lwip/port/sys_arch/dynamic \
 lwip/src/api \
 lwip/src/apps/httpsrv \
+lwip/src/apps/mdns \
 lwip/src/apps/mqtt \
 lwip/src/core \
 lwip/src/core/ipv4 \

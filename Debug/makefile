@@ -28,6 +28,7 @@ RM := rm -rf
 -include lwip/src/core/ipv4/subdir.mk
 -include lwip/src/core/subdir.mk
 -include lwip/src/apps/mqtt/subdir.mk
+-include lwip/src/apps/mdns/subdir.mk
 -include lwip/src/apps/httpsrv/subdir.mk
 -include lwip/src/api/subdir.mk
 -include lwip/port/sys_arch/dynamic/subdir.mk
