@@ -119,7 +119,7 @@ static void main_task( void *arg )
     switch ( WiFi_Control.WifiState )
     {
         case WIFI_STATE_CLIENT:
-            SetBoardToClient();
+            //SetBoardToClient();
         break;
 
         case WIFI_STATE_AP:

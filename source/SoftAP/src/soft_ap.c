@@ -7,6 +7,7 @@
  * Includes.
  ******************************************************************************/
 #include "soft_ap.h"
+#include "socket_task.h"
 
 /*******************************************************************************
  * Global data.
@@ -71,16 +72,29 @@ uint8_t SetBoardToAP( void )
     WPL_GetIP( ip, 0 );
     PRINTF(" Now join that network on your device and connect to this IP: %s\r\n", ip );
 
+    //Initializing TCP server.
+    if ( socket_task_init( 1, NULL, "10001" ) < 0 )
+    {
+    	PRINTF( "Failed to start the TCP echo server!\r\n" );
+    }
+
     return result;
 }
 
 /**
  * @brief This function cleans up the AP of the board.
  * 
+ * @param ssid Pointer to array with WiFi AP SSID.
+ * @param pswd Pointer to array with WiFi AP PSWD.
+ * 
  * @retval result of operation.
  */
-uint8_t CleanUpAP( void )
+uint8_t CleanUpAP( char *ssid, char *pswd )
 {
+    PRINTF( "[i] Storing WiFi credentials in mflash\r\n" );
+    
+    save_wifi_credentials( CONNECTION_INFO_FILENAME, ssid, pswd, DEFAULT_WIFI_SECURITY );
+
     PRINTF( "[i] Stopping AP!\r\n" );
 
     if ( WPL_Stop_AP() != WPLRET_SUCCESS )
@@ -89,6 +103,9 @@ uint8_t CleanUpAP( void )
         while ( 1 )
             __BKPT( 0 );
     }
+
+    PRINTF( "[i] Restarting board.\r\n" );
+    NVIC_SystemReset();
 
     return 0;
 }

@@ -38,6 +38,7 @@
 #define CONNECTION_INFO_FILENAME ( "connection_info.dat" )
 
 #define WIFI_NETWORK_LABEL "MyWifi"
+#define DEFAULT_WIFI_SECURITY "WPA3_SAE"
 
 /*******************************************************************************
  * Types.
@@ -70,7 +71,7 @@ typedef struct
  ******************************************************************************/
 void LinkStatusChangeCallback( bool linkState );
 uint8_t SetBoardToAP( void );
-uint8_t CleanUpAP( void );
+uint8_t CleanUpAP( char *ssid, char *pswd );
 uint8_t SetBoardToClient( void );
 uint8_t CleanUpClient( void );
 
