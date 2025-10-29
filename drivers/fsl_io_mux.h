@@ -1552,7 +1552,7 @@ extern "C" {
 
 /*!
  * @brief Sets the IO_MUX pin mux mode.
- * @note The parameters can be filled with the pin function ID macros.
+ * @note The parameters can be fil with the pin function ID macros.
  *
  * This is an example to set the GPIO2/GPIO3 as the Flexcomm0 UART RX/TX:
  * @code

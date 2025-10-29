@@ -28,7 +28,7 @@
 
 /*! @brief MQTT server host name or IP address. */
 #ifndef EXAMPLE_MQTT_SERVER_HOST
-#define EXAMPLE_MQTT_SERVER_HOST "test.mosquitto.org"
+#define EXAMPLE_MQTT_SERVER_HOST "broker.hivemq.com"
 #endif
 
 /*! @brief MQTT server port number. */

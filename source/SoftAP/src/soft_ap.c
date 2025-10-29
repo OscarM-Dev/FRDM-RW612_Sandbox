@@ -96,8 +96,8 @@ uint8_t SetBoardToAP( void )
     WiFi_Control.Connected = true;
 
     //Temporal, Showing board IP for TCP client.
-    WPL_GetIP( ip, 0 );
-    PRINTF(" Now join that network on your device and connect to this IP: %s\r\n", ip );
+//    WPL_GetIP( ip, 0 );
+//    PRINTF(" Now join that network on your device and connect to this IP: %s\r\n", ip );
 
     //MDNS service announcment.
     LOCK_TCPIP_CORE();
