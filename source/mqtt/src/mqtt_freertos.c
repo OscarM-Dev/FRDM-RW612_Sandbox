@@ -19,6 +19,8 @@
 #include "lwip/api.h"
 #include "lwip/apps/mqtt.h"
 #include "lwip/tcpip.h"
+#include "rgb_controller.h"
+#define MQTT_EXPECTED_RECEIVE_MSGS  6   //Number of expected messages to receive.
 
 // FIXME cleanup
 
@@ -122,25 +124,66 @@ static void mqtt_incoming_publish_cb(void *arg, const char *topic, u32_t tot_len
  */
 static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
 {
-    int i;
+    static const uint8_t *Expected_messages[] = { "Up", "Down", "Level 1", "Level 2", "Level 3", "Level 4" };
+    uint8_t i;
 
-    LWIP_UNUSED_ARG(arg);
+    LWIP_UNUSED_ARG( arg );
 
-    for (i = 0; i < len; i++)
+    for ( i = 0; i < len; i++ )
     {
-        if (isprint(data[i]))
+        if ( isprint( data[i] ) )
         {
-            PRINTF("%c", (char)data[i]);
+            PRINTF( "%c", ( char ) data[i] );
         }
         else
         {
-            PRINTF("\\x%02x", data[i]);
+            PRINTF( "\\x%02x", data[i] );
         }
     }
 
-    if (flags & MQTT_DATA_FLAG_LAST)
+    if ( flags & MQTT_DATA_FLAG_LAST )
     {
-        PRINTF("\"\r\n");
+        PRINTF( "\"\r\n" );
+    }
+
+    //Analizing message received.
+    for ( i = 0; i < MQTT_EXPECTED_RECEIVE_MSGS; i++ )
+    {
+        if ( memcmp( Expected_messages[i], data, len ) == 0 )
+        {
+            break;
+        }
+    }
+
+    //Proccesing data.
+    switch ( i )
+    {
+        case 0: //Up RGB color.
+            RGB_Set_Color_Cb( COLOR_UP );
+        break;
+
+        case 1: //Down RGB color.
+            RGB_Set_Color_Cb( COLOR_DOWN );
+        break;
+
+        case 2: //Level 1 RGB toggle.
+            RGB_Set_Toggle_Delay_Cb( LEVEL_1_1000_MS );
+        break;
+
+        case 3: //Level 2 RGB toggle.
+            RGB_Set_Toggle_Delay_Cb( LEVEL_2_500_MS );
+        break;
+
+        case 4: //Level 3 RGB toggle.
+            RGB_Set_Toggle_Delay_Cb( LEVEL_3_200_MS );
+        break;
+
+        case 5: //Level 4 RGB toggle.
+            RGB_Set_Toggle_Delay_Cb( LEVEL_4_100_MS );
+        break;
+
+        default:
+        break;
     }
 }
 
