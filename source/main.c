@@ -336,6 +336,7 @@ static void main_task( void *arg )
 
     //Analize if there are WiFi network credentials available in mflash.
     PRINTF( "[i] Verifying available WiFi credentials.\r\n" );
+    reset_saved_wifi_credentials(CONNECTION_INFO_FILENAME);
    
     result = get_saved_wifi_credentials( CONNECTION_INFO_FILENAME, ssid, password, security );
 

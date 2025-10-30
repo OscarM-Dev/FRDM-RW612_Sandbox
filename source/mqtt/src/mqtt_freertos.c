@@ -28,7 +28,7 @@
 
 /*! @brief MQTT server host name or IP address. */
 #ifndef EXAMPLE_MQTT_SERVER_HOST
-#define EXAMPLE_MQTT_SERVER_HOST "broker.hivemq.com"
+#define EXAMPLE_MQTT_SERVER_HOST "test.mosquitto.org"
 #endif
 
 /*! @brief MQTT server port number. */
@@ -149,27 +149,34 @@ static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t f
  */
 static void mqtt_subscribe_topics(mqtt_client_t *client)
 {
-    static const char *topics[] = {"lwip_topic/#", "lwip_other/#"};
-    int qos[]                   = {0, 1};
-    err_t err;
-    int i;
+#ifdef BOARD_1
+     static const char *Sub_topics[] = { "MQTT/K64F/Board2/BTN1", "MQTT/K64F/Board2/BTN2", "MQTT/K64F/Board2/POT" };
+ #else
+     static const char *Sub_topics[] = { "MQTT/RW612/Board/BTN1", "MQTT/RW612/Board/BTN2", "MQTT/RW612/Board/POT" };
+ #endif
 
-    mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb,
-                            LWIP_CONST_CAST(void *, &mqtt_client_info));
+ uint8_t QoS[] = { 1, 1, 1 };
+ err_t err;
+ int i;
 
-    for (i = 0; i < ARRAY_SIZE(topics); i++)
-    {
-        err = mqtt_subscribe(client, topics[i], qos[i], mqtt_topic_subscribed_cb, LWIP_CONST_CAST(void *, topics[i]));
+ //Setting input callbacks.
+ mqtt_set_inpub_callback( client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, LWIP_CONST_CAST( void *, &mqtt_client_info ) );
 
-        if (err == ERR_OK)
-        {
-            PRINTF("Subscribing to the topic \"%s\" with QoS %d...\r\n", topics[i], qos[i]);
-        }
-        else
-        {
-            PRINTF("Failed to subscribe to the topic \"%s\" with QoS %d: %d.\r\n", topics[i], qos[i], err);
-        }
-    }
+ //Subscribing to topics.
+ for ( i = 0; i < ARRAY_SIZE( Sub_topics ); i++ )
+ {
+     err = mqtt_subscribe( client, Sub_topics[i], QoS[i], mqtt_topic_subscribed_cb, LWIP_CONST_CAST( void *, Sub_topics[i] ) );
+
+     if ( err == ERR_OK )
+     {
+         PRINTF( "Subscribing to the topic \"%s\" with QoS %d...\r\n", Sub_topics[i], QoS[i] );
+     }
+
+     else
+     {
+         PRINTF( "Failed to subscribe to the topic \"%s\" with QoS %d: %d.\r\n", Sub_topics[i], QoS[i], err );
+     }
+ }
 }
 
 /*!
@@ -319,28 +326,28 @@ static void app_thread(void *arg)
         PRINTF("Failed to obtain IP address: %d.\r\n", err);
     }
 
-    /* Publish some messages */
-    for (i = 0; i < 5;)
-    {
-        if (connected)
-        {
-            err = tcpip_callback(publish_message, NULL);
-            if (err != ERR_OK)
-            {
-                PRINTF("Failed to invoke publishing of a message on the tcpip_thread: %d.\r\n", err);
-            }
-            i++;
-        }
-
-        sys_msleep(1000U);
-    }
+//    /* Publish some messages */
+//    for (i = 0; i < 5;)
+//    {
+//        if (connected)
+//        {
+//            err = tcpip_callback(publish_message, NULL);
+//            if (err != ERR_OK)
+//            {
+//                PRINTF("Failed to invoke publishing of a message on the tcpip_thread: %d.\r\n", err);
+//            }
+//            i++;
+//        }
+//
+//        sys_msleep(1000U);
+//    }
 
     /* Disconnect from MQTT broker from tcpip_thread */
-    err = tcpip_callback(disconnect_from_mqtt, NULL);
-    if (err != ERR_OK)
-    {
-        PRINTF("Failed to invoke disconnect from broker on the tcpip_thread: %d.\r\n", err);
-    }
+//    err = tcpip_callback(disconnect_from_mqtt, NULL);
+//    if (err != ERR_OK)
+//    {
+//        PRINTF("Failed to invoke disconnect from broker on the tcpip_thread: %d.\r\n", err);
+//    }
 
     vTaskDelete(NULL);
 }

@@ -84,7 +84,7 @@ uint8_t SetBoardToAP( void )
 
     //Start the access point.
     PRINTF( "Starting Access Point: SSID: %s, Chnl: %d\r\n", WiFi_Control.SSID, WIFI_AP_CHANNEL );
-    result = WPL_Start_AP( WiFi_Control.SSID, WiFi_Control.Pswd, WIFI_AP_CHANNEL );
+    //result = WPL_Start_AP( WiFi_Control.SSID, WiFi_Control.Pswd, WIFI_AP_CHANNEL );
 
     if ( result != WPLRET_SUCCESS )
     {
