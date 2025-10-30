@@ -336,7 +336,7 @@ static void main_task( void *arg )
 
     //Analize if there are WiFi network credentials available in mflash.
     PRINTF( "[i] Verifying available WiFi credentials.\r\n" );
-    //reset_saved_wifi_credentials(CONNECTION_INFO_FILENAME);
+    reset_saved_wifi_credentials(CONNECTION_INFO_FILENAME);
    
     result = get_saved_wifi_credentials( CONNECTION_INFO_FILENAME, ssid, password, security );
 
@@ -425,6 +425,27 @@ int main( void )
     /* Initialize the hardware */
     BOARD_InitHardware();
     GPIO_PortInit(GPIO, 0U);
+
+    for(int i=0; i<3; i++)
+    {
+    	GPIO_PinInit( RGB_LED.RGB_pins_conf[i].Gpio, PORT_0,RGB_LED.RGB_pins_conf[i].Pin, &RGB_LED.RGB_pins_conf[i].Pin_config );
+    }
+
+    LED_BLUE_OFF();
+    LED_GREEN_OFF();
+    LED_RED_OFF();
+
+    RGB_LED.RGB_color=0;
+    GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Pin, RGB_CHANNEL_ENABLED );
+    GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Pin, RGB_CHANNEL_DISABLED);
+
+    RGB_LED.RGB_color++;
+    GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Pin, RGB_CHANNEL_ENABLED );
+    GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Pin, RGB_CHANNEL_DISABLED);
+
+    RGB_LED.RGB_color++;
+    GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Pin, RGB_CHANNEL_ENABLED );
+    GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Pin, RGB_CHANNEL_DISABLED);
 
     /* Create the main Task */
     if ( xTaskCreate( main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 4, NULL ) != pdPASS )

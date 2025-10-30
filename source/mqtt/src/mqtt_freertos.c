@@ -369,29 +369,6 @@ static void app_thread(void *arg)
         PRINTF("Failed to obtain IP address: %d.\r\n", err);
     }
 
-//    /* Publish some messages */
-//    for (i = 0; i < 5;)
-//    {
-//        if (connected)
-//        {
-//            err = tcpip_callback(publish_message, NULL);
-//            if (err != ERR_OK)
-//            {
-//                PRINTF("Failed to invoke publishing of a message on the tcpip_thread: %d.\r\n", err);
-//            }
-//            i++;
-//        }
-//
-//        sys_msleep(1000U);
-//    }
-
-    /* Disconnect from MQTT broker from tcpip_thread */
-//    err = tcpip_callback(disconnect_from_mqtt, NULL);
-//    if (err != ERR_OK)
-//    {
-//        PRINTF("Failed to invoke disconnect from broker on the tcpip_thread: %d.\r\n", err);
-//    }
-
     vTaskDelete(NULL);
 }
 

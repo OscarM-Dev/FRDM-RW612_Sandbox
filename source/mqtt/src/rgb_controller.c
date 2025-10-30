@@ -135,8 +135,11 @@ void vRGB_Timer_Cb( TimerHandle_t xTimer )
     //Set corresponding RGB color, onlty if LED was previously active.
     if ( enabled )
     {
-        GPIO_PortSet( RGB_LED.RGB_pins_conf[RED].Gpio,PORT_0 ,RGB_RED_BLUE_DISABLED );
-        GPIO_PortSet( RGB_LED.RGB_pins_conf[GREEN].Gpio, PORT_0,RGB_GREEN_DISABLED );
+        //GPIO_PortSet( RGB_LED.RGB_pins_conf[RED].Gpio,PORT_0 ,RGB_RED_BLUE_DISABLED );
+        //GPIO_PortSet( RGB_LED.RGB_pins_conf[GREEN].Gpio, PORT_0,RGB_GREEN_DISABLED );
+        GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[RED].Pin, RGB_CHANNEL_DISABLED);
+        GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[GREEN].Pin, RGB_CHANNEL_DISABLED);
+        GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[BLUE].Pin, RGB_CHANNEL_DISABLED);
         GPIO_PinWrite( RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Gpio,PORT_0, RGB_LED.RGB_pins_conf[RGB_LED.RGB_color].Pin, RGB_CHANNEL_ENABLED );
     }
 
