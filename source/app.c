@@ -49,6 +49,7 @@
 
 #include "servo_task.h"
 #include "database_task.h"
+#include "public_macros.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -109,7 +110,7 @@ void tcpipserver_task(void *pvParameters);
 
 static phy_handle_t phyHandle;
 static netif_ext_callback_t linkStatusCallbackInfo;
-#define MAX_CMD_LENGTH 2
+#define MAX_CMD_LENGTH 1
 #define MAX_TAGID_LENGTH 20
 QueueHandle_t servo_queue = NULL;
 QueueHandle_t database_queue = NULL;
@@ -299,8 +300,9 @@ static void print_dhcp_state(void *arg)
                 PRINTF("\r\n IPv4 Address     : %s\r\n", ipaddr_ntoa(&netif->ip_addr));
                 PRINTF(" IPv4 Subnet mask : %s\r\n", ipaddr_ntoa(&netif->netmask));
                 PRINTF(" IPv4 Gateway     : %s\r\n\r\n", ipaddr_ntoa(&netif->gw));
-                //TODO DSOAE Set TCPIP event bit
-                //TODO DSOAE TCPIP event bit
+                
+                //Set lwip ready flag to inform other dependent tasks.
+                xEventGroupSetBits( tcpipEvent_group, LWIP_READY_FLAG );
             }
         }
 
@@ -458,9 +460,9 @@ int main(void)
 {
     BOARD_InitHardware();
 
-	//RTOS objects needed to be started before the scheduler:
-	servo_queue = xQueueCreate(10, MAX_CMD_LENGTH);
-	database_queue = xQueueCreate(10, MAX_TAGID_LENGTH);
+	//Crete queues and event group.
+	servo_queue = xQueueCreate( 10, MAX_CMD_LENGTH );
+	database_queue = xQueueCreate( 10, MAX_TAGID_LENGTH );
 	tcpipEvent_group = xEventGroupCreate();
 
     USB_HostApplicationInit();

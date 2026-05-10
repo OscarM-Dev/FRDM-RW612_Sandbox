@@ -12,6 +12,8 @@
 #include "host_keyboard_mouse.h"
 #include "host_keyboard.h"
 #include "app.h"
+#include "FreeRTOS.h"
+#include "queue.h"
 
 /*******************************************************************************
  * Definitions
@@ -20,7 +22,8 @@
 
 char tagID[20] = {0};
 char tagIdchIndex = 0;
-//TODO DSOAE extern the Queue Handler for the servo queue
+extern QueueHandle_t database_queue;
+
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -147,7 +150,9 @@ static void USB_HostKeyboardPrintKey(uint8_t key, uint8_t shift)
         	tagID[--tagIdchIndex] = 0x0;
         	//clean the index before starting get a new tagID
         	tagIdchIndex = 0;
-        	//TODO DSOAE Send the current tagID to the database using messages
+
+        	//Send the current tagID to the database using messages
+        	xQueueSend( database_queue, &tagID, portMAX_DELAY );
         	PRINTF("TagID scanned: %s.\r\n", tagID);
         }
     }

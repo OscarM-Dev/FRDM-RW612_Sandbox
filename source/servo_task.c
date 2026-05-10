@@ -3,6 +3,9 @@
 #include "app.h"
 #include "fsl_ctimer.h"
 #include "servo_task.h"
+#include "public_macros.h"
+#include "FreeRTOS.h"
+#include "queue.h"
 
 
 /*******************************************************************************
@@ -22,7 +25,7 @@
 uint32_t timerClock;
 volatile uint32_t g_pwmPeriod   = 0U;
 volatile uint32_t g_pulsePeriod = 0U;
-//TODO DSOAE extern the Queue Handler for the servo queue
+extern QueueHandle_t servo_queue;
 
 #define CLOSESERVO   0
 #define OPENSERVO    1
@@ -89,29 +92,26 @@ void servo_task(void *param)
 	PRINTF("Servo Task Started.\r\n");
     init_pwm();
 
-    while (1)
+	//Wait for new command to open or close the servo.
+    while ( xQueueReceive( servo_queue, &cmd, portMAX_DELAY ) )
     {
-    	//TODO DSOAE wait for new messages on servo_queue using xQueueReceive
-		//while (xQueueReceive(servo_queue, &cmd, portMAX_DELAY) == pdTRUE)
-    	while (0)
+    	switch (cmd)
 		{
-			switch (cmd)
-			{
-				case 'o':
-					PRINTF("Open servo\r\n");
-					move_Servo (OPENSERVO);
-					vTaskDelay(2000);
-					PRINTF("Closing servo...\r\n");
-					move_Servo (CLOSESERVO);
-				break;
-				case 'c':
-					PRINTF("Close servo\r\n");
-					move_Servo (CLOSESERVO);
-				break;
-				default:
-				break;
-			}
-		}
+			case OPEN_SERVO_CMD:
+				PRINTF("Open servo\r\n");
+				move_Servo (OPENSERVO);
+				vTaskDelay(2000);
+				PRINTF("Closing servo...\r\n");
+				move_Servo (CLOSESERVO);
+			break;
 
+			case CLOSE_SERVO_CMD:
+				PRINTF("Close servo\r\n");
+				move_Servo (CLOSESERVO);
+			break;
+
+			default:
+			break;
+		}
     }
 }
