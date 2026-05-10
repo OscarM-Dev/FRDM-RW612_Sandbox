@@ -30,8 +30,8 @@ void BOARD_InitModuleClock(void)
     /* Set 50MHz output clock required by PHY. */
     CLOCK_EnableClock(kCLOCK_TddrMciEnetClk);
 
-    /* Use 16 MHz clock for the Ctimer0 */
-    CLOCK_AttachClk(kSFRO_to_CTIMER0);
+    /* Use 16 MHz clock for Ctimer3 (servo PWM). */
+    CLOCK_AttachClk(kSFRO_to_CTIMER3);
 }
 
 static void MDIO_Init(void)

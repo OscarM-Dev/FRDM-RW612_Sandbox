@@ -111,8 +111,8 @@ extern phy_ksz8081_resource_t g_phy_resource;
 /* ENET clock frequency. */
 #define EXAMPLE_CLOCK_FREQ CLOCK_GetMainClkFreq()
 
-#define CTIMER          CTIMER0         /* Timer 0 */
+#define CTIMER          CTIMER3         /* Timer 3 */
 #define CTIMER_MAT_OUT  kCTIMER_Match_0 /* Match output 0 */
-#define CTIMER_CLK_FREQ CLOCK_GetCTimerClkFreq(0)
+#define CTIMER_CLK_FREQ CLOCK_GetCTimerClkFreq(3) /* Timer 3 clock frequency */
 
 #endif /* __APP_H__ */
