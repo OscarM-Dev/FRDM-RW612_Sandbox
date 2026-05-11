@@ -10,6 +10,9 @@
 #define CLOSE_SERVO_CMD   'c'
 
 //LEDs control macros.
-#define LED_DELAY_MS 2000
+#define LED_DELAY_MS pdMS_TO_TICKS( 2000 )
+
+//USB NFC task macros.
+#define NFC_TASK_DELAY pdMS_TO_TICKS( 250 )
 
 #endif /* PUBLIC_MACROS_H */

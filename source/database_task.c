@@ -38,6 +38,7 @@
 #include "timers.h"
 #include "stdio.h"
 #include "public_macros.h"
+#include "board.h"
 
 //Test from the web browser
 //	http://192.168.1.2:1031/datalog.php?frdm_id=FRMD-Profe&sensor=acc&data=123123
@@ -48,7 +49,7 @@
 
 extern QueueHandle_t servo_queue;
 extern QueueHandle_t database_queue;
-extern EventGroupHandle_t tcpipEvent_group;
+extern EventGroupHandle_t event_group;
 
 
 #if LWIP_NETCONN
@@ -58,7 +59,6 @@ extern EventGroupHandle_t tcpipEvent_group;
 
 static void led_off_timer_callback(TimerHandle_t xTimer)
 {
-	void( xTimer );
 	LED_RED_OFF();
 	LED_GREEN_OFF();
 	LED_BLUE_OFF();
@@ -82,9 +82,9 @@ void database_task(void *pvParameters)
 	TimerHandle_t ledOffTimer;
 
 	//Wait until TCPIP stack is up and running
-	tcpipBits = xEventGroupWaitBits( tcpipEvent_group, LWIP_READY_FLAG, pdFALSE, pdTRUE, portMAX_DELAY );
+	tcpipBits = xEventGroupWaitBits( event_group, LWIP_READY_FLAG, pdFALSE, pdTRUE, portMAX_DELAY );
 
-	ledOffTimer = xTimerCreate( "ledOffTimer",  pdMS_TO_TICKS( LED_DELAY_MS ),  pdFALSE, NULL, led_off_timer_callback );
+	ledOffTimer = xTimerCreate( "ledOffTimer",  LED_DELAY_MS,  pdFALSE, NULL, led_off_timer_callback );
 	
 	LWIP_ASSERT("database_task(): LED timer creation failed.", ledOffTimer != NULL);
 

@@ -114,7 +114,7 @@ static netif_ext_callback_t linkStatusCallbackInfo;
 #define MAX_TAGID_LENGTH 20
 QueueHandle_t servo_queue = NULL;
 QueueHandle_t database_queue = NULL;
-EventGroupHandle_t tcpipEvent_group = NULL;
+EventGroupHandle_t event_group = NULL;
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -302,7 +302,7 @@ static void print_dhcp_state(void *arg)
                 PRINTF(" IPv4 Gateway     : %s\r\n\r\n", ipaddr_ntoa(&netif->gw));
                 
                 //Set lwip ready flag to inform other dependent tasks.
-                xEventGroupSetBits( tcpipEvent_group, LWIP_READY_FLAG );
+                xEventGroupSetBits( event_group, LWIP_READY_FLAG );
             }
         }
 
@@ -453,8 +453,10 @@ static void USB_HostApplicationKeyboardTask(void *param)
     while (1)
     {
         USB_HostHidKeyboardTask(param);
+        vTaskDelay( NFC_TASK_DELAY );
     }
 }
+
 
 int main(void)
 {
@@ -463,7 +465,7 @@ int main(void)
 	//Crete queues and event group.
 	servo_queue = xQueueCreate( 10, MAX_CMD_LENGTH );
 	database_queue = xQueueCreate( 10, MAX_TAGID_LENGTH );
-	tcpipEvent_group = xEventGroupCreate();
+	event_group = xEventGroupCreate();
 
     USB_HostApplicationInit();
 
