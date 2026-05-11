@@ -392,7 +392,7 @@ static usb_status_t USB_HostEvent(usb_device_handle deviceHandle,
             break;
 
         case kUSB_HostEventNotSupported:
-            usb_echo("device not supported.\r\n");
+            TS_PRINTF("device not supported.\r\n");
             break;
 
         case kUSB_HostEventEnumerationDone:
@@ -412,7 +412,7 @@ static usb_status_t USB_HostEvent(usb_device_handle deviceHandle,
             break;
 
         case kUSB_HostEventEnumerationFail:
-            usb_echo("enumeration failed\r\n");
+            TS_PRINTF("enumeration failed\r\n");
             break;
 
         default:
@@ -434,12 +434,12 @@ static void USB_HostApplicationInit(void)
     status = USB_HostInit(CONTROLLER_ID, &g_HostHandle, USB_HostEvent);
     if (status != kStatus_USB_Success)
     {
-        usb_echo("host init error\r\n");
+        TS_PRINTF("host init error\r\n");
         return;
     }
     USB_HostIsrEnable();
 
-    usb_echo("host init done\r\n");
+    TS_PRINTF("host init done\r\n");
 }
 
 static void USB_HostTask(void *param)
@@ -482,12 +482,12 @@ int main(void)
 
     if (xTaskCreate(USB_HostTask, "usb host task", 2000L / sizeof(portSTACK_TYPE), g_HostHandle, 4, NULL) != pdPASS)
     {
-        usb_echo("create host task error\r\n");
+        TS_PRINTF("create host task error\r\n");
     }
 
     if (xTaskCreate(USB_HostApplicationKeyboardTask, "keyboard task", 2000L / sizeof(portSTACK_TYPE),&g_HostHidKeyboard, 3, NULL) != pdPASS)
     {
-        usb_echo("create mouse task error\r\n");
+        TS_PRINTF("create mouse task error\r\n");
     }
 
     if (xTaskCreate(tcpipserver_task, "tcpipserver_task", 2000L / sizeof(portSTACK_TYPE), NULL, 3, NULL) != pdPASS)
