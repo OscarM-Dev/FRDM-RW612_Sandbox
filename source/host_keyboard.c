@@ -142,7 +142,7 @@ static void USB_HostKeyboardPrintKey(uint8_t key, uint8_t shift)
     }
     else if (key <= 56)
     {
-        TS_PRINTF("%c", g_HostKeyboardTable[key][shift]);
+        //TS_PRINTF("%c", g_HostKeyboardTable[key][shift]);
         //Save every char on the tagID var.
         tagID[tagIdchIndex++] = g_HostKeyboardTable[key][shift];
         if (g_HostKeyboardTable[key][shift] == '\n')
