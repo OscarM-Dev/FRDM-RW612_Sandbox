@@ -9,4 +9,7 @@
 #define OPEN_SERVO_CMD    'o'
 #define CLOSE_SERVO_CMD   'c'
 
+//LEDs control macros.
+#define LED_DELAY_MS 2000
+
 #endif /* PUBLIC_MACROS_H */

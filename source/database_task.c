@@ -35,6 +35,7 @@
 #include "lwip/opt.h"
 #include "event_groups.h"
 #include "queue.h"
+#include "timers.h"
 #include "stdio.h"
 #include "public_macros.h"
 
@@ -54,6 +55,15 @@ extern EventGroupHandle_t tcpipEvent_group;
 
 #include "lwip/sys.h"
 #include "lwip/api.h"
+
+static void led_off_timer_callback(TimerHandle_t xTimer)
+{
+	void( xTimer );
+	LED_RED_OFF();
+	LED_GREEN_OFF();
+	LED_BLUE_OFF();
+}
+
 /*-----------------------------------------------------------------------------------*/
 void database_task(void *pvParameters)
 {
@@ -69,9 +79,14 @@ void database_task(void *pvParameters)
 	char tagID[20];
 	char servocmd = 0;
 	EventBits_t tcpipBits;
+	TimerHandle_t ledOffTimer;
 
 	//Wait until TCPIP stack is up and running
 	tcpipBits = xEventGroupWaitBits( tcpipEvent_group, LWIP_READY_FLAG, pdFALSE, pdTRUE, portMAX_DELAY );
+
+	ledOffTimer = xTimerCreate( "ledOffTimer",  pdMS_TO_TICKS( LED_DELAY_MS ),  pdFALSE, NULL, led_off_timer_callback );
+	
+	LWIP_ASSERT("database_task(): LED timer creation failed.", ledOffTimer != NULL);
 
 	PRINTF("Database Task Started.\n\r");
 	
@@ -123,11 +138,15 @@ void database_task(void *pvParameters)
 				//Send a message to the servo task to open the door
 				servocmd = OPEN_SERVO_CMD;
 				xQueueSend( servo_queue, &servocmd, portMAX_DELAY );
+				LED_GREEN_ON();
+				xTimerReset( ledOffTimer, 0 );
 			}
 			
 			else
 			{
 				PRINTF("User does NOT exists.\n\r");
+				LED_RED_ON();
+				xTimerReset( ledOffTimer, 0 );
 			}
 			netbuf_delete(buf);
 		}
@@ -175,7 +194,7 @@ void database_task(void *pvParameters)
 		netconn_close(conn);
 		netconn_delete(conn);
 	}
-	
+
 	vTaskSuspend(NULL);
 }
 /*-----------------------------------------------------------------------------------*/

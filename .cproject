@@ -843,21 +843,6 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="frdmrw612_host_hid_mouse_keyboard_freertos.null.326611011" name="frdmrw612_host_hid_mouse_keyboard_freertos" projectType="com.crt.advproject.projecttype.exe"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1458128561;com.crt.advproject.config.exe.debug.1458128561.;com.crt.advproject.gas.exe.debug.412108604;com.crt.advproject.assembler.input.467017121">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1609597604;com.crt.advproject.config.exe.release.1609597604.;com.crt.advproject.gcc.exe.release.513490100;com.crt.advproject.compiler.input.1431140893">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1458128561;com.crt.advproject.config.exe.debug.1458128561.;com.crt.advproject.gcc.exe.debug.1726305021;com.crt.advproject.compiler.input.2059000868">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1609597604;com.crt.advproject.config.exe.release.1609597604.;com.crt.advproject.gas.exe.release.1377014945;com.crt.advproject.assembler.input.282240980">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
 		<sdkName>SDK_2.x_FRDM-RW612</sdkName>
@@ -895,4 +880,19 @@
 	<storageModule moduleId="refreshScope"/>
 	<storageModule moduleId="openCmsis"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1294948078;com.crt.advproject.config.exe.debug.1294948078.;com.crt.advproject.gas.exe.debug.1554467637;com.crt.advproject.assembler.input.224746757">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1335259156;com.crt.advproject.config.exe.release.1335259156.;com.crt.advproject.gcc.exe.release.963305333;com.crt.advproject.compiler.input.1154763384">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1294948078;com.crt.advproject.config.exe.debug.1294948078.;com.crt.advproject.gcc.exe.debug.1397788312;com.crt.advproject.compiler.input.459709693">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1335259156;com.crt.advproject.config.exe.release.1335259156.;com.crt.advproject.gas.exe.release.1524462586;com.crt.advproject.assembler.input.1611445344">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>

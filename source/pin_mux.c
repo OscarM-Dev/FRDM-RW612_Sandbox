@@ -67,6 +67,10 @@ void BOARD_InitPins(void)
     IO_MUX_SetPinMux(IO_MUX_ENET_MDIO);
     IO_MUX_SetPinMux(IO_MUX_GPIO21);
     IO_MUX_SetPinMux(IO_MUX_GPIO55);
+    IO_MUX_SetPinMux(IO_MUX_GPIO0);
+    IO_MUX_SetPinMux(IO_MUX_GPIO1);
+    IO_MUX_SetPinMux(IO_MUX_GPIO12);
+    IO_MUX_SetPinMux(IO_MUX_GPIO11);
 
     /* Initialize CT3_MAT0_OUT functionality on pin GPIO_52 (pin K8) */
     IO_MUX_SetPinMux(IO_MUX_CT3_MAT0_OUT);

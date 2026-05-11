@@ -467,7 +467,7 @@ int main(void)
 
     USB_HostApplicationInit();
 
-    /* Initialize lwIP from thread */
+    //Initialize lwIP from thread
     if (sys_thread_new("main", stack_init, NULL, INIT_THREAD_STACKSIZE, 5) == NULL)
     {
         LWIP_ASSERT("main(): Task creation failed.", 0);
