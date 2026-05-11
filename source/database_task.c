@@ -88,12 +88,12 @@ void database_task(void *pvParameters)
 	
 	LWIP_ASSERT("database_task(): LED timer creation failed.", ledOffTimer != NULL);
 
-	PRINTF("Database Task Started.\n\r");
+	TS_PRINTF("Database Task Started.\n\r");
 	
 	//Wait for new tagID to authenticate or register.
 	while ( xQueueReceive( database_queue, &tagID, portMAX_DELAY ) )
 	{
-		PRINTF( "Received a tagID to Authenticate: %s\n\r" , tagID );
+		TS_PRINTF( "Received a tagID to Authenticate: %s\n\r" , tagID );
 			
 		//Connect to database.
 		// Create a TCP client socket for one authentication transaction.
@@ -109,11 +109,11 @@ void database_task(void *pvParameters)
 		netconn_connect(conn, &ipaddr, 1031);
 
 		// Authenticate user by sending tag ID as query string to nfcauth.php.
-		PRINTF( "Authenticate user\n\r" );
+		TS_PRINTF( "Authenticate user\n\r" );
 			
 		// HTTP GET line: server script will validate tagid and return text response.
 		sprintf(HTTPrequest, "GET /nfcauth.php?tagid=%s HTTP/1.0\r\n\r\n", tagID);
-		PRINTF("HTTPrequest to database: %s\n\r", HTTPrequest);
+		TS_PRINTF("HTTPrequest to database: %s\n\r", HTTPrequest);
 		err = netconn_write(conn, HTTPrequest, strlen(HTTPrequest), NETCONN_COPY);
 
 		// netconn_recv may return multiple netbuf fragments for one HTTP response.
@@ -126,14 +126,14 @@ void database_task(void *pvParameters)
 			} while (netbuf_next(buf) >= 0);
 
 			// At this point, data points to the last fragment visited in the loop above.
-			PRINTF("Received: %s\n", data);
+			TS_PRINTF("Received: %s\n", data);
 			
 			// Very simple validation: look for expected marker in HTTP body/text payload.
 			charptr = strstr((const char *)data, "tag_id: ");
 			
 			if (charptr)
 			{
-				PRINTF("User does exists.\n\r");
+				TS_PRINTF("User does exists.\n\r");
 					
 				//Send a message to the servo task to open the door
 				servocmd = OPEN_SERVO_CMD;
@@ -144,7 +144,7 @@ void database_task(void *pvParameters)
 			
 			else
 			{
-				PRINTF("User does NOT exists.\n\r");
+				TS_PRINTF("User does NOT exists.\n\r");
 				LED_RED_ON();
 				xTimerReset( ledOffTimer, 0 );
 			}

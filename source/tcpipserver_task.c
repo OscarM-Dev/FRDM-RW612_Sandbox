@@ -32,6 +32,7 @@
 
 #include "lwip/opt.h"
 #include "event_groups.h"
+#include "public_macros.h"
 
 //TODO DSOAE extern tcpip Events group
 
@@ -54,7 +55,7 @@ void tcpipserver_task(void *pvParameters)
 
 	//TODO DSOAE Wait until TCPIP stack is up and running
 
-	PRINTF("TCPIP Admin Server started.\r\n");
+	TS_PRINTF("TCPIP Admin Server started.\r\n");
 
 	/* Create a new connection identifier. */
 	/* Bind connection to well known port number 1030. */
@@ -84,7 +85,7 @@ void tcpipserver_task(void *pvParameters)
 				result = strncmp("Open", data, 4);
 				if (result == 0)
 				{
-					PRINTF("Received: %s\n", data);
+					TS_PRINTF("Received: %s\n", data);
 					//TODO send a message to the servo task to open the door
 				}
 				netbuf_delete(buf);

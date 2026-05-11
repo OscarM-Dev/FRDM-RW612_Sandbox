@@ -14,6 +14,7 @@
 #include "app.h"
 #include "FreeRTOS.h"
 #include "queue.h"
+#include "public_macros.h"
 
 /*******************************************************************************
  * Definitions
@@ -153,7 +154,7 @@ static void USB_HostKeyboardPrintKey(uint8_t key, uint8_t shift)
 
         	//Send the current tagID to the database using messages
         	xQueueSend( database_queue, &tagID, portMAX_DELAY );
-        	PRINTF("TagID scanned: %s.\r\n", tagID);
+            TS_PRINTF("TagID scanned: %s.\r\n", tagID);
         }
     }
     else

@@ -37,6 +37,7 @@
 #include "lwip/tcpip.h"
 #include "lwip/sys.h"
 #include "ethernetif.h"
+#include "semphr.h"
 
 #include "fsl_adapter_gpio.h"
 
@@ -115,6 +116,7 @@ static netif_ext_callback_t linkStatusCallbackInfo;
 QueueHandle_t servo_queue = NULL;
 QueueHandle_t database_queue = NULL;
 EventGroupHandle_t event_group = NULL;
+SemaphoreHandle_t printf_mutex = NULL;
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -127,7 +129,7 @@ static void linkStatusCallback(struct netif *netif_, netif_nsc_reason_t reason, 
     if (reason != LWIP_NSC_LINK_CHANGED)
         return;
 
-    PRINTF("[LINK STATE] netif=%d, state=%s", netif_->num, args->link_changed.state ? "up" : "down");
+    TS_PRINTF("[LINK STATE] netif=%d, state=%s", netif_->num, args->link_changed.state ? "up" : "down");
 
     if (args->link_changed.state)
     {
@@ -162,10 +164,10 @@ static void linkStatusCallback(struct netif *netif_, netif_nsc_reason_t reason, 
                 break;
         }
 
-        PRINTF(", speed=%s_%s", speedStr, duplexStr);
+        TS_PRINTF(", speed=%s_%s", speedStr, duplexStr);
     }
 
-    PRINTF("\r\n");
+    TS_PRINTF("\r\n");
 }
 
 /*!
@@ -212,14 +214,14 @@ static void stack_init(void *arg)
 
     while (ethernetif_wait_linkup(&netif, 5000) != ERR_OK)
     {
-        PRINTF("PHY Auto-negotiation failed. Please check the cable connection and link partner setting.\r\n");
+        TS_PRINTF("PHY Auto-negotiation failed. Please check the cable connection and link partner setting.\r\n");
     }
 
     netifapi_dhcp_start(&netif);
 
-    PRINTF("\r\n************************************************\r\n");
-    PRINTF(" DHCP example\r\n");
-    PRINTF("************************************************\r\n");
+    TS_PRINTF("\r\n************************************************\r\n");
+    TS_PRINTF(" DHCP example\r\n");
+    TS_PRINTF("************************************************\r\n");
 
     if (sys_thread_new("print_dhcp", print_dhcp_state, &netif, PRINT_THREAD_STACKSIZE, PRINT_THREAD_PRIO) == NULL)
     {
@@ -252,54 +254,54 @@ static void print_dhcp_state(void *arg)
         {
             dhcp_last_state = dhcp->state;
 
-            PRINTF(" DHCP state       : ");
+            TS_PRINTF(" DHCP state       : ");
             switch (dhcp_last_state)
             {
                 case DHCP_STATE_OFF:
-                    PRINTF("OFF");
+                    TS_PRINTF("OFF");
                     break;
                 case DHCP_STATE_REQUESTING:
-                    PRINTF("REQUESTING");
+                    TS_PRINTF("REQUESTING");
                     break;
                 case DHCP_STATE_INIT:
-                    PRINTF("INIT");
+                    TS_PRINTF("INIT");
                     break;
                 case DHCP_STATE_REBOOTING:
-                    PRINTF("REBOOTING");
+                    TS_PRINTF("REBOOTING");
                     break;
                 case DHCP_STATE_REBINDING:
-                    PRINTF("REBINDING");
+                    TS_PRINTF("REBINDING");
                     break;
                 case DHCP_STATE_RENEWING:
-                    PRINTF("RENEWING");
+                    TS_PRINTF("RENEWING");
                     break;
                 case DHCP_STATE_SELECTING:
-                    PRINTF("SELECTING");
+                    TS_PRINTF("SELECTING");
                     break;
                 case DHCP_STATE_INFORMING:
-                    PRINTF("INFORMING");
+                    TS_PRINTF("INFORMING");
                     break;
                 case DHCP_STATE_CHECKING:
-                    PRINTF("CHECKING");
+                    TS_PRINTF("CHECKING");
                     break;
                 case DHCP_STATE_BOUND:
-                    PRINTF("BOUND");
+                    TS_PRINTF("BOUND");
                     break;
                 case DHCP_STATE_BACKING_OFF:
-                    PRINTF("BACKING_OFF");
+                    TS_PRINTF("BACKING_OFF");
                     break;
                 default:
-                    PRINTF("%u", dhcp_last_state);
+                    TS_PRINTF("%u", dhcp_last_state);
                     assert(0);
                     break;
             }
-            PRINTF("\r\n");
+            TS_PRINTF("\r\n");
 
             if (dhcp_last_state == DHCP_STATE_BOUND)
             {
-                PRINTF("\r\n IPv4 Address     : %s\r\n", ipaddr_ntoa(&netif->ip_addr));
-                PRINTF(" IPv4 Subnet mask : %s\r\n", ipaddr_ntoa(&netif->netmask));
-                PRINTF(" IPv4 Gateway     : %s\r\n\r\n", ipaddr_ntoa(&netif->gw));
+                TS_PRINTF("\r\n IPv4 Address     : %s\r\n", ipaddr_ntoa(&netif->ip_addr));
+                TS_PRINTF(" IPv4 Subnet mask : %s\r\n", ipaddr_ntoa(&netif->netmask));
+                TS_PRINTF(" IPv4 Gateway     : %s\r\n\r\n", ipaddr_ntoa(&netif->gw));
                 
                 //Set lwip ready flag to inform other dependent tasks.
                 xEventGroupSetBits( event_group, LWIP_READY_FLAG );
@@ -462,6 +464,9 @@ int main(void)
 {
     BOARD_InitHardware();
 
+    printf_mutex = xSemaphoreCreateMutex();
+    LWIP_ASSERT("main(): Printf mutex creation failed.", printf_mutex != NULL);
+
 	//Crete queues and event group.
 	servo_queue = xQueueCreate( 10, MAX_CMD_LENGTH );
 	database_queue = xQueueCreate( 10, MAX_TAGID_LENGTH );
@@ -487,17 +492,17 @@ int main(void)
 
     if (xTaskCreate(tcpipserver_task, "tcpipserver_task", 2000L / sizeof(portSTACK_TYPE), NULL, 3, NULL) != pdPASS)
     {
-        PRINTF("create host task error\r\n");
+        TS_PRINTF("create host task error\r\n");
     }
 
     if (xTaskCreate(servo_task, "Servo task", 2000L / sizeof(portSTACK_TYPE), NULL, 3, NULL) != pdPASS)
     {
-        PRINTF("create host task error\r\n");
+        TS_PRINTF("create host task error\r\n");
     }
 
     if (xTaskCreate(database_task, "Database task", 3000L / sizeof(portSTACK_TYPE), NULL, 3, NULL) != pdPASS)
     {
-        PRINTF("create host task error\r\n");
+        TS_PRINTF("create host task error\r\n");
     }
 
     vTaskStartScheduler();

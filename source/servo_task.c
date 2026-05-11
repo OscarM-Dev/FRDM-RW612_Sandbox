@@ -51,7 +51,7 @@ void init_pwm()
     /* CTimer0 counter uses the AHB clock, some CTimer1 modules use the Aysnc clock */
     srcClock_Hz = CTIMER_CLK_FREQ;
 
-    PRINTF("CTimer example to generate a PWM signal\r\n");
+	TS_PRINTF("CTimer example to generate a PWM signal\r\n");
 
     CTIMER_GetDefaultConfig(&config);
     timerClock = srcClock_Hz / (config.prescale + 1);
@@ -89,7 +89,7 @@ void servo_task(void *param)
 {
 	char cmd;
 
-	PRINTF("Servo Task Started.\r\n");
+	TS_PRINTF("Servo Task Started.\r\n");
     init_pwm();
 
 	//Wait for new command to open or close the servo.
@@ -98,15 +98,15 @@ void servo_task(void *param)
     	switch (cmd)
 		{
 			case OPEN_SERVO_CMD:
-				PRINTF("Open servo\r\n");
+				TS_PRINTF("Open servo\r\n");
 				move_Servo (OPENSERVO);
 				vTaskDelay(2000);
-				PRINTF("Closing servo...\r\n");
+				TS_PRINTF("Closing servo...\r\n");
 				move_Servo (CLOSESERVO);
 			break;
 
 			case CLOSE_SERVO_CMD:
-				PRINTF("Close servo\r\n");
+				TS_PRINTF("Close servo\r\n");
 				move_Servo (CLOSESERVO);
 			break;
 
