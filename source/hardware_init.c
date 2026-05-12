@@ -80,6 +80,7 @@ void BOARD_InitHardware(void)
     g_phy_resource.read  = MDIO_Read;
     g_phy_resource.write = MDIO_Write;
 
+    // Initialize LEDs.
     LED_RED_INIT( LOGIC_LED_OFF );
     LED_BLUE_INIT( LOGIC_LED_OFF );
     LED_GREEN_INIT( LOGIC_LED_OFF );

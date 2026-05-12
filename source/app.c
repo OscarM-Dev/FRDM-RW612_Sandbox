@@ -459,9 +459,28 @@ static void USB_HostApplicationKeyboardTask(void *param)
     }
 }
 
+void GPIO_INTA_DriverIRQHandler( void )
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    // Clear external interrupt flag first.
+    GPIO_PinClearInterruptFlag( BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, kGPIO_InterruptA );
+
+    // Set register new tag id flag only when event group is ready.
+    if (event_group != NULL)
+    {
+        xEventGroupSetBitsFromISR( event_group, REGISTER_TAG_FLAG, &xHigherPriorityTaskWoken );
+    }
+
+    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+
+    SDK_ISR_EXIT_BARRIER;
+}
 
 int main(void)
 {
+    gpio_pin_config_t sw_config    = { kGPIO_DigitalInput, 0 };
+    gpio_interrupt_config_t config = { kGPIO_PinIntEnableEdge, kGPIO_PinIntEnableLowOrFall };
+
     BOARD_InitHardware();
 
     printf_mutex = xSemaphoreCreateMutex();
@@ -471,6 +490,18 @@ int main(void)
 	servo_queue = xQueueCreate( 10, MAX_CMD_LENGTH );
 	database_queue = xQueueCreate( 10, MAX_TAGID_LENGTH );
 	event_group = xEventGroupCreate();
+
+    //GPIO_PortInit(GPIO, 0U);
+    GPIO_PinInit( BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, &sw_config ); /* SW2 */
+
+    // Configure button interrupt after RTOS objects are ready.
+    GPIO_PinDisableInterrupt( BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, (uint32_t)kGPIO_InterruptA );
+    GPIO_SetPinInterruptConfig( BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, &config );
+    GPIO_PinClearInterruptFlag( BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, (uint32_t)kGPIO_InterruptA );
+    NVIC_ClearPendingIRQ( GPIO_INTA_IRQn );
+    NVIC_SetPriority( GPIO_INTA_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY );
+    GPIO_PinEnableInterrupt( BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, (uint32_t)kGPIO_InterruptA );
+    EnableIRQ( GPIO_INTA_IRQn );
 
     USB_HostApplicationInit();
 

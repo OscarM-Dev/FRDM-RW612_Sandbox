@@ -74,6 +74,7 @@ void BOARD_InitPins(void)
 
     /* Initialize CT3_MAT0_OUT functionality on pin GPIO_52 (pin K8) */
     IO_MUX_SetPinMux(IO_MUX_CT3_MAT0_OUT);
+    IO_MUX_SetPinConfig(11U, IO_MUX_PinConfigPullUp);
 }
 /***********************************************************************************************************************
  * EOF

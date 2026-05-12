@@ -10,6 +10,7 @@ extern SemaphoreHandle_t printf_mutex;
 //Macros.
 //Event group flags.
 #define LWIP_READY_FLAG ( 1 << 0 )
+#define REGISTER_TAG_FLAG ( 1 << 1 )
 
 //Servo control macros.
 #define OPEN_SERVO_CMD    'o'
