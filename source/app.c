@@ -117,6 +117,7 @@ QueueHandle_t servo_queue = NULL;
 QueueHandle_t database_queue = NULL;
 EventGroupHandle_t event_group = NULL;
 SemaphoreHandle_t printf_mutex = NULL;
+TimerHandle_t ledOffTimer = NULL;
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -477,6 +478,13 @@ void GPIO_INTA_DriverIRQHandler( void )
     SDK_ISR_EXIT_BARRIER;
 }
 
+static void led_off_timer_callback(TimerHandle_t xTimer)
+{
+	LED_RED_OFF();
+	LED_GREEN_OFF();
+	LED_BLUE_OFF();
+}
+
 int main(void)
 {
     gpio_pin_config_t sw_config    = { kGPIO_DigitalInput, 0 };
@@ -491,6 +499,7 @@ int main(void)
 	servo_queue = xQueueCreate( 10, MAX_CMD_LENGTH );
 	database_queue = xQueueCreate( 10, MAX_TAGID_LENGTH );
 	event_group = xEventGroupCreate();
+    ledOffTimer = xTimerCreate( "ledOffTimer",  LED_DELAY_MS,  pdFALSE, NULL, led_off_timer_callback );
 
     //GPIO_PortInit(GPIO, 0U);
     GPIO_PinInit( BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, &sw_config ); /* SW2 */
@@ -522,7 +531,7 @@ int main(void)
         TS_PRINTF("create mouse task error\r\n");
     }
 
-    if (xTaskCreate(tcpipserver_task, "tcpipserver_task", 2000L / sizeof(portSTACK_TYPE), NULL, 3, NULL) != pdPASS)
+    if (xTaskCreate(tcpipserver_task, "tcpipserver_task", 2000L / sizeof(portSTACK_TYPE), NULL, 4, NULL) != pdPASS)
     {
         TS_PRINTF("create host task error\r\n");
     }

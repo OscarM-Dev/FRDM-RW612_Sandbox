@@ -57,13 +57,7 @@ extern EventGroupHandle_t event_group;
 
 #include "lwip/sys.h"
 #include "lwip/api.h"
-
-static void led_off_timer_callback(TimerHandle_t xTimer)
-{
-	LED_RED_OFF();
-	LED_GREEN_OFF();
-	LED_BLUE_OFF();
-}
+externTimerHandle_t ledOffTimer;
 
 /*-----------------------------------------------------------------------------------*/
 void database_task(void *pvParameters)
@@ -80,14 +74,11 @@ void database_task(void *pvParameters)
 	char tagID[20];
 	char servocmd = 0;
 	EventBits_t tcpipBits;
-	TimerHandle_t ledOffTimer;
 	bool registerId = false;
 
 	//Wait until TCPIP stack is up and running
 	tcpipBits = xEventGroupWaitBits( event_group, LWIP_READY_FLAG, pdFALSE, pdTRUE, portMAX_DELAY );
-
-	ledOffTimer = xTimerCreate( "ledOffTimer",  LED_DELAY_MS,  pdFALSE, NULL, led_off_timer_callback );
-	
+		
 	LWIP_ASSERT("database_task(): LED timer creation failed.", ledOffTimer != NULL);
 
 	TS_PRINTF("Database Task Started.\n\r");

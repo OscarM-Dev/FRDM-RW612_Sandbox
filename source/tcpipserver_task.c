@@ -33,10 +33,11 @@
 #include "lwip/opt.h"
 #include "event_groups.h"
 #include "public_macros.h"
+#include "board.h"
 
-//TODO DSOAE extern tcpip Events group
-
-//TODO DSOAE extern the Queue Handler for the servo queue
+extern EventGroupHandle_t event_group;
+extern QueueHandle_t servo_queue;
+extern TimerHandle_t ledOffTimer;
 
 #if LWIP_NETCONN
 
@@ -52,8 +53,10 @@ void tcpipserver_task(void *pvParameters)
 	void *data;
 	u16_t len;
 	EventBits_t tcpipBits;
+	char servocmd = 0;
 
-	//TODO DSOAE Wait until TCPIP stack is up and running
+	//Wait until TCPIP stack is up and running
+	tcpipBits = xEventGroupWaitBits( event_group, LWIP_READY_FLAG, pdFALSE, pdTRUE, portMAX_DELAY );
 
 	TS_PRINTF("TCPIP Admin Server started.\r\n");
 
@@ -86,7 +89,28 @@ void tcpipserver_task(void *pvParameters)
 				if (result == 0)
 				{
 					TS_PRINTF("Received: %s\n", data);
-					//TODO send a message to the servo task to open the door
+					servocmd = OPEN_SERVO_CMD;
+					xQueueSendToFront( servo_queue, &servocmd, portMAX_DELAY );
+					LED_GREEN_ON();
+					xTimerReset( ledOffTimer, 0 );
+				}
+
+				else
+				{
+					result = strncmp("Close", data, 5);
+					if (result == 0)					{
+						TS_PRINTF("Received: %s\n", data);
+						servocmd = CLOSE_SERVO_CMD;
+						xQueueSendToFront( servo_queue, &servocmd, portMAX_DELAY );
+						LED_BLUE_ON();
+						xTimerReset( ledOffTimer, 0 );
+					}
+					else
+					{
+						TS_PRINTF("Received unknown command: %s\n", data);
+						LED_RED_ON();
+						xTimerReset( ledOffTimer, 0 );
+					}
 				}
 				netbuf_delete(buf);
 			}
