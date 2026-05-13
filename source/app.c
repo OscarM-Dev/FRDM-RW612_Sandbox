@@ -462,11 +462,12 @@ static void USB_HostApplicationKeyboardTask(void *param)
 void GPIO_INTA_DriverIRQHandler( void )
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
     // Clear external interrupt flag first.
     GPIO_PinClearInterruptFlag( BOARD_SW2_GPIO, BOARD_SW2_GPIO_PORT, BOARD_SW2_GPIO_PIN, kGPIO_InterruptA );
 
-    // Set register new tag id flag only when event group is ready.
-    if (event_group != NULL)
+    // ISR-safe gate: notify register mode.
+    if ( event_group != NULL )
     {
         xEventGroupSetBitsFromISR( event_group, REGISTER_TAG_FLAG, &xHigherPriorityTaskWoken );
     }
