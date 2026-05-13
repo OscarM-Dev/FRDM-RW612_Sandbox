@@ -57,7 +57,7 @@ extern EventGroupHandle_t event_group;
 
 #include "lwip/sys.h"
 #include "lwip/api.h"
-externTimerHandle_t ledOffTimer;
+extern TimerHandle_t ledOffTimer;
 
 /*-----------------------------------------------------------------------------------*/
 void database_task(void *pvParameters)
