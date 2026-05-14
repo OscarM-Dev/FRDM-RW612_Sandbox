@@ -38,6 +38,7 @@
 #include "timers.h"
 #include "stdio.h"
 #include <stdbool.h>
+#include <string.h>
 #include "public_macros.h"
 #include "board.h"
 
@@ -56,25 +57,59 @@ extern EventGroupHandle_t event_group;
 #if LWIP_NETCONN
 
 #include "lwip/sys.h"
-#include "lwip/api.h"
+
 extern TimerHandle_t ledOffTimer;
 
+#define LOCAL_DB_MAX_TAGS      2
+#define LOCAL_DB_TAGID_LENGTH  20
+
+static char s_localTagStorage[LOCAL_DB_MAX_TAGS][LOCAL_DB_TAGID_LENGTH] = {0};
+static char *s_registeredTags[LOCAL_DB_MAX_TAGS] = {0};
+static uint8_t s_registeredTagsCount = 0;
+
+// Returns true if the tag is already present in the local simulated DB.
+static bool local_db_is_tag_registered(const char *tagID)
+{
+	uint8_t i;
+
+	for (i = 0; i < s_registeredTagsCount; i++)
+	{
+		if ((s_registeredTags[i] != NULL) && (strcmp(s_registeredTags[i], tagID) == 0))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// Registers a new tag in the local simulated DB if there is space.
+static bool local_db_register_tag(const char *tagID)
+{
+	char *slot;
+
+	if (s_registeredTagsCount >= LOCAL_DB_MAX_TAGS)
+	{
+		return false;
+	}
+
+	slot = s_localTagStorage[s_registeredTagsCount];
+	strncpy(slot, tagID, LOCAL_DB_TAGID_LENGTH - 1U);
+	slot[LOCAL_DB_TAGID_LENGTH - 1U] = '\0';
+
+	s_registeredTags[s_registeredTagsCount] = slot;
+	s_registeredTagsCount++;
+
+	return true;
+}
+
 /*-----------------------------------------------------------------------------------*/
+// Main database task: receives tag IDs and handles register/auth modes.
 void database_task(void *pvParameters)
 {
-	struct netconn *conn;
-	err_t err;
-	int result;
-	char* charptr;
-	ip4_addr_t ipaddr;
-	char HTTPrequest[100] = {0};
-	struct netbuf *buf;
-	void *data;
-	u16_t len;
 	char tagID[20];
 	char servocmd = 0;
 	EventBits_t tcpipBits;
-	bool registerId = false;
 
 	//Wait until TCPIP stack is up and running
 	tcpipBits = xEventGroupWaitBits( event_group, LWIP_READY_FLAG, pdFALSE, pdTRUE, portMAX_DELAY );
@@ -92,175 +127,74 @@ void database_task(void *pvParameters)
 			//Register ID.
 			TS_PRINTF( "Received a tagID to Register: %s\n\r" , tagID );
 
-			//Connect to database.
-			// Create a TCP client socket for one authentication transaction.
-			conn = netconn_new(NETCONN_TCP);
-			if (conn == NULL)
+			// Simulated local validation/register flow (no HTTP requests).
+			// sprintf(HTTPrequest, "GET /nfcauth.php?tagid=%s HTTP/1.0\r\n\r\n", tagID);
+			// err = netconn_write(conn, HTTPrequest, strlen(HTTPrequest), NETCONN_COPY);
+			// while ((err = netconn_recv(conn, &buf)) == ERR_OK)
+
+			if (local_db_is_tag_registered(tagID))
 			{
-				TS_PRINTF("database_task: netconn_new failed in register mode\r\n");
-				xEventGroupClearBits(event_group, REGISTER_TAG_FLAG);
-				registerId = false;
-				continue;
+				// Tag was already registered previously.
+				TS_PRINTF("User already registered in local DB.\n\r");
+				LED_RED_ON();
+				LED_BLUE_ON();
+				LED_GREEN_ON();
+				xTimerReset( ledOffTimer, 0 );
 			}
-
-			// Local source port is 7; remote destination port is configured below (1031).
-			netconn_bind(conn, IP_ADDR_ANY, 7);
-
-			// PHP server endpoint in LAN.
-			IP4_ADDR(&ipaddr, 192,168,1,2);
-			netconn_connect(conn, &ipaddr, 1031);
-
-			//Validate tag id in database.
-			TS_PRINTF( "Validate user\n\r" );
-
-			// HTTP GET line: server script will validate tagid and return text response.
-			sprintf(HTTPrequest, "GET /nfcauth.php?tagid=%s HTTP/1.0\r\n\r\n", tagID);
-			TS_PRINTF("HTTPrequest to database: %s\n\r", HTTPrequest);
-			err = netconn_write(conn, HTTPrequest, strlen(HTTPrequest), NETCONN_COPY);
-
-			// netconn_recv may return multiple netbuf fragments for one HTTP response.
-			while ((err = netconn_recv(conn, &buf)) == ERR_OK)
+			else
 			{
-				do {
-					// data/len points to current payload fragment from lwIP pbuf chain.
-					netbuf_data(buf, &data, &len);
-					//PRINTF("Received: %s\n", data);
-				} while (netbuf_next(buf) >= 0);
+				// Tag not found; try to register it in local DB.
+				// sprintf(HTTPrequest, "GET /nfcreg.php?tagid=%s&name=... HTTP/1.0\r\n\r\n", tagID);
+				// err = netconn_write(conn, HTTPrequest, strlen(HTTPrequest), NETCONN_COPY);
 
-				// At this point, data points to the last fragment visited in the loop above.
-				TS_PRINTF("Received: %s\n", data);
-				
-				// Very simple validation: look for expected marker in HTTP body/text payload.
-				charptr = strstr((const char *)data, "tag_id: ");
-			
-				if (charptr)
+				if (local_db_register_tag(tagID))
 				{
-					TS_PRINTF("User already registered in database.\n\r");
+					TS_PRINTF( "User Registered in local DB\n" );
 					LED_RED_ON();
 					LED_BLUE_ON();
 					LED_GREEN_ON();
 					xTimerReset( ledOffTimer, 0 );
 				}
-			
 				else
 				{
-					TS_PRINTF(" User does NOT exists in database, registering..	.\n\r");
-					registerId = true;
-				}
-				netbuf_delete(buf);
-			}
-
-			if ( registerId )
-			{
-				//Register new user in database.
-				sprintf(HTTPrequest, "GET /nfcreg.php?tagid=%s&name=Luis&lastname=Garabito&access=Mortal HTTP/1.0\r\n\r\n", tagID);
-				TS_PRINTF("HTTPrequest to database: %s\n\r", HTTPrequest);
-				err = netconn_write(conn, HTTPrequest, strlen(HTTPrequest), NETCONN_COPY);
-				
-				while ((err = netconn_recv(conn, &buf)) == ERR_OK)
-				{
-					do {
-						netbuf_data(buf, &data, &len);
-						//PRINTF("Received: %s\n", data);
-					} while (netbuf_next(buf) >= 0);
-					
-					TS_PRINTF("Received: %s\n", data);
-					result = strncmp("HTTP/1.1 200 OK", data, 15);
-					
-					if (result == 0)
-					{
-						TS_PRINTF( "User Registered\n" );
-						LED_RED_ON();
-						LED_BLUE_ON();
-						LED_GREEN_ON();
-						xTimerReset( ledOffTimer, 0 );						
-					}
-
-					else
-					{
-						TS_PRINTF( "Error registering user\n" );
-						LED_RED_ON();
-						LED_BLUE_ON();
-						xTimerReset( ledOffTimer, 0 );
-					}
-
-					netbuf_delete(buf);
+					TS_PRINTF( "Local DB is full, cannot register user\n" );
+					LED_RED_ON();
+					LED_BLUE_ON();
+					xTimerReset( ledOffTimer, 0 );
 				}
 			}
 
 			xEventGroupClearBits( event_group, REGISTER_TAG_FLAG );
-			registerId = false;
 		}
 
 		else
 		{
 			//Authenticate ID.
 			TS_PRINTF( "Received a tagID to Authenticate: %s\n\r" , tagID );
-			
-			//Connect to database.
-			// Create a TCP client socket for one authentication transaction.
-			conn = netconn_new(NETCONN_TCP);
-			if (conn == NULL)
+
+			// Simulated local authentication flow (no HTTP requests).
+			// sprintf(HTTPrequest, "GET /nfcauth.php?tagid=%s HTTP/1.0\r\n\r\n", tagID);
+			// err = netconn_write(conn, HTTPrequest, strlen(HTTPrequest), NETCONN_COPY);
+			// while ((err = netconn_recv(conn, &buf)) == ERR_OK)
+
+			if (local_db_is_tag_registered(tagID))
 			{
-				TS_PRINTF("database_task: netconn_new failed in auth mode\r\n");
-				continue;
+				// Valid user; open servo.
+				TS_PRINTF("User exists in local DB.\n\r");
+
+				//Send a message to the servo task to open the door
+				servocmd = OPEN_SERVO_CMD;
+				xQueueSend( servo_queue, &servocmd, portMAX_DELAY );
+				LED_GREEN_ON();
+				xTimerReset( ledOffTimer, 0 );
 			}
-
-			// Local source port is 7; remote destination port is configured below (1031).
-			netconn_bind(conn, IP_ADDR_ANY, 7);
-
-			// PHP server endpoint in LAN.
-			IP4_ADDR(&ipaddr, 192,168,1,2);
-			netconn_connect(conn, &ipaddr, 1031);
-
-			// Authenticate user by sending tag ID as query string to nfcauth.php.
-			TS_PRINTF( "Authenticate user\n\r" );
-			
-			// HTTP GET line: server script will validate tagid and return text response.
-			sprintf(HTTPrequest, "GET /nfcauth.php?tagid=%s HTTP/1.0\r\n\r\n", tagID);
-			TS_PRINTF("HTTPrequest to database: %s\n\r", HTTPrequest);
-			err = netconn_write(conn, HTTPrequest, strlen(HTTPrequest), NETCONN_COPY);
-
-			// netconn_recv may return multiple netbuf fragments for one HTTP response.
-			while ((err = netconn_recv(conn, &buf)) == ERR_OK)
+			else
 			{
-				do {
-					// data/len points to current payload fragment from lwIP pbuf chain.
-					netbuf_data(buf, &data, &len);
-					//PRINTF("Received: %s\n", data);
-				} while (netbuf_next(buf) >= 0);
-
-				// At this point, data points to the last fragment visited in the loop above.
-				TS_PRINTF("Received: %s\n", data);
-				
-				// Very simple validation: look for expected marker in HTTP body/text payload.
-				charptr = strstr((const char *)data, "tag_id: ");
-			
-				if (charptr)
-				{
-					TS_PRINTF("User does exists.\n\r");
-					
-					//Send a message to the servo task to open the door
-					servocmd = OPEN_SERVO_CMD;
-					xQueueSend( servo_queue, &servocmd, portMAX_DELAY );
-					LED_GREEN_ON();
-					xTimerReset( ledOffTimer, 0 );
-				}
-			
-				else
-				{
-					TS_PRINTF("User does NOT exists.\n\r");
-					LED_RED_ON();
-					xTimerReset( ledOffTimer, 0 );
-				}
-				netbuf_delete(buf);
+				// Unknown user; deny access.
+				TS_PRINTF("User does NOT exist in local DB.\n\r");
+				LED_RED_ON();
+				xTimerReset( ledOffTimer, 0 );
 			}
-		}
-		
-		if (conn != NULL)
-		{
-			netconn_close(conn);
-			netconn_delete(conn);
 		}
 	}
 
